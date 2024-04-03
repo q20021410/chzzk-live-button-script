@@ -42,7 +42,7 @@ async function btn_create() {
             }
         }
         attempts++;
-    }, 500);
+    }, 1000);
 }
 
 function insertButton(channelProfileAction) {
