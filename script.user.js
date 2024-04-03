@@ -12,83 +12,173 @@
 
 // icon source: https://www.flaticon.com/kr/
 
-window.onload = async function() {
-    await main();
-    btn_create();
+const secret = 'chzzkscript-' + Math.floor(Math.random() * Date.now()).toString(36)
 
-    // URL 변경 감지 후 페이지 새로고치기
-    watchURLChange(refreshPage);
-};
+async function documentReady () {
+  if (document.readyState !== 'loading') {
+    return null
+  }
 
-async function main() {
-    return new Promise((resolve, reject) => {
-        if (window.location.pathname !== "undefined") {
-            console.log("URL: https://" + window.location.hostname + "/live" + window.location.pathname);
-            resolve();
-        } else {
-            reject(new Error("함수 실행에 실패 했습니다."));
-        }
-    });
+  return new Promise() < null > (resolve => {
+    document.addEventListener('readystatechange', () => {
+      resolve(null)
+    })
+  })
 }
 
-async function btn_create() {
-    // 요소 존재 여부 확인 후 재시도
-    let channelProfileAction = null;
-    const maxAttempts = 10;
-    let attempts = 0;
-
-    const findChannelProfileAction = setInterval(() => {
-        channelProfileAction = document.getElementsByClassName("channel_profile_action__-s3Ew")[0];
-        if (channelProfileAction || attempts >= maxAttempts) {
-            clearInterval(findChannelProfileAction);
-            if (channelProfileAction) {
-                insertButton(channelProfileAction);
-            } else {
-                console.error("버튼 생성에 실패 하였습니다.");
-            }
-        }
-        attempts++;
-    }, 1000);
-}
-
-function insertButton(channelProfileAction) {
-    let btn = document.createElement("div");
-    btn.innerHTML = '<button type="button" id="chzzk_live_move" class="button_container__x044H button_medium__r15mw button_capsule__tU-O- button_dark__cw8hT" aria-haspopup="true" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 71 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path stroke-linejoin="round" stroke-width="2" stroke="currentColor" fill="currentColor" d="M41.6875 50.035V56.4283C41.6875 57.4779 42.8456 57.9891 43.6136 57.3025C47.0338 54.2473 53.9323 48.0705 56.6907 45.5129C60.4031 42.0695 62.6833 37.0062 62.4884 31.3953C62.1514 21.645 54.2472 14 44.8206 14L26.4402 14.0005C17.0461 14.0005 8.96226 21.4728 8.51992 31.186C8.04804 41.5562 16.0223 50.035 25.9375 50.035H41.6875Z" m41.6875=""></path></svg>라이브</button>'
-
-    channelProfileAction.insertBefore(btn, channelProfileAction.lastElementChild);
-    btn.setAttribute("style", "margin-left: 5px; margin-right: 5px;");
-}
-
-document.addEventListener("click", async function(event) {
-    if (event.target && event.target.id === "chzzk_live_move") {
-        await moveLocation();
+function createMutationObserver () {
+  /**
+   * @type {Array<(mutations: MutationRecord[]) => any>}
+   */
+  const callbacks = []
+  const observer = new MutationObserver(function (mutations) {
+    for (const callback of callbacks) {
+      callback(mutations)
     }
-});
+  })
 
-async function moveLocation() {
-    return new Promise((resolve, reject) => {
-        location.href = "https://" + window.location.hostname + "/live" + window.location.pathname;
-        resolve();
-    });
+  observer.observe(document.body, {
+    subtree: true,
+    childList: true
+  })
+
+  /**
+   * @param {Array<(mutations: MutationRecord[]) => any>} callback
+   */
+  function registerMutationObserver (callback) {
+    callbacks.push(callback)
+  }
+
+  return registerMutationObserver
 }
 
-// URL 변경 감지 함수
-function watchURLChange(callback) {
-    let currentURL = window.location.href;
-    setInterval(() => {
-        if (window.location.href !== currentURL) {
-            currentURL = window.location.href;
-            callback();
-        }
-    }, 1000); // 매 초마다 URL 변경을 확인
+/**
+ * @param {string} url
+ */
+function createUrlObserver (url = location.href) {
+  /**
+   * @type {Array<() => any>}
+   */
+  const callbacks = []
+
+  /**
+   * @param {() => any} callback
+   */
+  function registerUrlObserver (callback) {
+    callbacks.push(callback)
+  }
+
+  function handleMutationObserverForUrlObservasion () {
+    if (url !== location.href) {
+      url = location.href
+
+      for (const callback of callbacks) {
+        callback()
+      }
+    }
+  }
+
+  return [handleMutationObserverForUrlObservasion, registerUrlObserver]
 }
 
-// 페이지 새로고침 함수
-function refreshPage() {
-    location.reload();
+/**
+ * @param {HTMLButtonElement} button
+ */
+function cloneButtonFromAnother (button) {
+  const clonedButton = document.createElement('button')
+
+  clonedButton.setAttribute('type', 'button')
+  clonedButton.setAttribute('aria-haspopup', 'false')
+  clonedButton.setAttribute('aria-expanded', 'false')
+
+  for (const className of button.classList) {
+    if (!className.startsWith('button_highlight')) {
+      clonedButton.classList.add(className)
+    }
+  }
+
+  return clonedButton
 }
 
+function $addLiveButtonToSearchPage () {
+  if (location.pathname !== '/search') {
+    return
+  }
 
+  const profileContainers = document.querySelectorAll(`[class^="profile_container"]:not([${secret}])`)
 
+  for (const profileContainer of profileContainers) {
+    if (profileContainer.hasAttribute(secret)) {
+      continue
+    }
 
+    const profileThumbnail = profileContainer.querySelector('a[class^="profile_thumbnail"][href^="/"]')
+    const pathnameWithHash = profileThumbnail.getAttribute('href')
+    const channelHashMatch = pathnameWithHash.match(/[a-z0-9]{32}/)
 
+    if (channelHashMatch === null) {
+      continue
+    }
+
+    profileContainer.setAttribute(secret, '')
+
+    // Get the class list for the existing button
+    const followButton = profileContainer.querySelector('[class^="profile_control"] > button[class^="button_container"]')
+
+    // A new button to create
+    const liveButton = cloneButtonFromAnother(followButton)
+
+    liveButton.textContent = '라이브'
+
+    liveButton.addEventListener('click', function () {
+      location.href = '/live/' + channelHashMatch[0]
+    })
+
+    followButton.insertAdjacentElement('beforebegin', liveButton)
+  }
+}
+
+function $addLiveButtonToChannelPage () {
+  if (!/\/[a-z0-9]{32}/.test(location.pathname)) {
+    return
+  }
+
+  const profileContainers = document.querySelectorAll(`[class^="channel_profile_container"]:not([${secret}])`)
+
+  for (const profileContainer of profileContainers) {
+    if (profileContainer.hasAttribute(secret)) {
+      continue
+    }
+
+    profileContainer.setAttribute(secret, '')
+
+    // Get the class list for the existing button
+    const followButton = profileContainer.querySelector('[class^="channel_profile_action"] > button[class^="button_container"]')
+
+    // A new button to create
+    const liveButton = cloneButtonFromAnother(followButton)
+
+    liveButton.textContent = '라이브'
+
+    liveButton.addEventListener('click', function () {
+      location.href = '/live' + location.pathname
+    })
+
+    followButton.insertAdjacentElement('beforebegin', liveButton)
+  }
+}
+
+async function main () {
+  await documentReady()
+  const registerMutationObserver = createMutationObserver()
+  const [handleMutationObserverForUrlObservasion] = createUrlObserver()
+
+  registerMutationObserver(handleMutationObserverForUrlObservasion)
+  registerMutationObserver($addLiveButtonToSearchPage)
+  registerMutationObserver($addLiveButtonToChannelPage)
+
+  $addLiveButtonToSearchPage()
+  $addLiveButtonToChannelPage()
+}
+
+main()
