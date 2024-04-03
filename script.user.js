@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         치지직 라이브 버튼 추가
 // @namespace    http://tampermonkey.net/
-// @version      2024-03-28
+// @version      2024-04-03
 // @description  진행중이지 않은 방송 화면으로 들어가서 채팅을 볼 수 있게 해줍니다.
 // @author       [https://clsw.kr](https://clsw.kr/)
 // @match        https://chzzk.naver.com/*
