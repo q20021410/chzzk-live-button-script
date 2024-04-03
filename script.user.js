@@ -19,7 +19,7 @@ async function documentReady () {
     return null
   }
 
-  return new Promise() < null > (resolve => {
+  return new Promise(resolve => {
     document.addEventListener('readystatechange', () => {
       resolve(null)
     })
