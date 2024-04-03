@@ -9,36 +9,60 @@
 // @grant        none
 // ==/UserScript==
 
-window.onload = main();
-btn_create();
+window.onload = async function() {
+    await main();
+    btn_create();
+};
 
-function main() {
-    if (window.location.pathname !== "undefined") {
-        console.log("URL: https://" + window.location.hostname + "/live" + window.location.pathname);
-    } else {}
+async function main() {
+    return new Promise((resolve, reject) => {
+        if (window.location.pathname !== "undefined") {
+            console.log("URL: https://" + window.location.hostname + "/live" + window.location.pathname);
+            resolve();
+        } else {
+            reject(new Error("함수 실행에 실패 했습니다."));
+        }
+    });
 }
 
-setTimeout(() => {
-    let btn2 = document.querySelector('#chzzk_live_move')
-    btn2.addEventListener("click", function() {
-        location.href = "https://" + window.location.hostname + "/live" + window.location.pathname;
-    });
-}, 1500);
+async function btn_create() {
+    // 요소 존재 여부 확인 후 재시도
+    let channelProfileAction = null;
+    const maxAttempts = 10;
+    let attempts = 0;
 
-function btn_create() {
-    document.getElementsByClassName("channel_profile_action__-s3Ew")[0];
+    const findChannelProfileAction = setInterval(() => {
+        channelProfileAction = document.getElementsByClassName("channel_profile_action__-s3Ew")[0];
+        if (channelProfileAction || attempts >= maxAttempts) {
+            clearInterval(findChannelProfileAction);
+            if (channelProfileAction) {
+                insertButton(channelProfileAction);
+            } else {
+                console.error("버튼 생성에 실패 하였습니다.");
+            }
+        }
+        attempts++;
+    }, 500);
+}
+
+function insertButton(channelProfileAction) {
     let btn = document.createElement("div");
     btn.innerHTML = '<button type="button" id="chzzk_live_move" class="button_container__x044H button_medium__r15mw button_capsule__tU-O- button_dark__cw8hT" aria-haspopup="true" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 71 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path stroke-linejoin="round" stroke-width="2" stroke="currentColor" fill="currentColor" d="M41.6875 50.035V56.4283C41.6875 57.4779 42.8456 57.9891 43.6136 57.3025C47.0338 54.2473 53.9323 48.0705 56.6907 45.5129C60.4031 42.0695 62.6833 37.0062 62.4884 31.3953C62.1514 21.645 54.2472 14 44.8206 14L26.4402 14.0005C17.0461 14.0005 8.96226 21.4728 8.51992 31.186C8.04804 41.5562 16.0223 50.035 25.9375 50.035H41.6875Z" m41.6875=""></path></svg>라이브</button>'
-
-    setTimeout(() => {
-        document
-            .getElementsByClassName("channel_profile_action__-s3Ew")[0]
-            .insertBefore(
-                btn,
-                document.getElementsByClassName(
-                    "channel_profile_action__-s3Ew"
-                )[0].lastElementChild
-            );
-    }, 1500);
+    
+    channelProfileAction.insertBefore(btn, channelProfileAction.lastElementChild);
     btn.setAttribute("style", "margin-left: 5px; margin-right: 5px;");
 }
+
+document.addEventListener("click", async function(event) {
+    if (event.target && event.target.id === "chzzk_live_move") {
+        await moveLocation();
+    }
+});
+
+async function moveLocation() {
+    return new Promise((resolve, reject) => {
+        location.href = "https://" + window.location.hostname + "/live" + window.location.pathname;
+        resolve();
+    });
+}
+
